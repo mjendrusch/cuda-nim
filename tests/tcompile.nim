@@ -23,7 +23,6 @@ suite "compilation":
       let prog = newProgram(kernelCode)
       prog.compile
       let ptx = prog.ptx
-
       # Set up and run the kernel
       cuda.init()
       var
@@ -44,7 +43,7 @@ suite "compilation":
       copyMem(y, sq2[0].addr, 1024 * sizeOf(float))
       copyMem(a, sq3[0].addr, 1024 * sizeOf(float))
 
-      kernel.launch(1, 1, 1, 1024, 1, 1, args, 0)
+      kernel.launch(Dim(x: 1, y: 1, z: 1), Dim(x: 1024, y: 1, z: 1), args, 0)
       copyMem(sq1[0].addr, x, 1024 * sizeOf(float))
       copyMem(sq2[0].addr, y, 1024 * sizeOf(float))
       copyMem(sq3[0].addr, a, 1024 * sizeOf(float))

@@ -6,7 +6,7 @@ type
   DevicePtr*[T] = distinct CuDevicePtr
   DevicePointer* = CuDevicePtr | DevicePtr
   Dim* = object
-    x, y, z: uint
+    x*, y*, z*: uint
 
 proc cfree*(p: pointer) {. importc: "free" .}
 
@@ -63,15 +63,19 @@ proc newProgram*(src: string; name: string = "defaultName.cu";
                  numHeaders: int = 0; headers: seq[string] = @[];
                  includeNames: seq[string] = @[]): NvrtcProgram =
   ## Creates a new CUDA program from source.
-  let
+  var
+    headersPtr: cstringArray = nil
+    includeNamesPtr: cstringArray = nil
+  if numHeaders != 0:
     headersPtr = allocCstringArray(headers)
     includeNamesPtr = allocCstringArray(includeNames)
-  defer:
-    deallocCstringArray(headersPtr)
-    deallocCstringArray(includeNamesPtr)
+
   handleErrorRtc nvrtcCreateProgram(result.addr, src.cstring, name.cstring,
                                     headers.len.cint, headersPtr,
                                     includeNamesPtr)
+  if numHeaders != 0:
+    deallocCstringArray(headersPtr)
+    deallocCstringArray(includeNamesPtr)
 
 proc compile*(pr: NvrtcProgram; options: seq[string] = @[]) =
   ## Compiles a given CUDA program, setting options.
