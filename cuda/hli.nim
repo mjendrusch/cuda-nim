@@ -147,7 +147,7 @@ proc newModuleFromData*(data: string): CuModule =
   let cs = data.cstring
   handleError cuModuleLoadDataEx(result.addr, cs, 0.cuint, nil, nil)
 
-proc kernel*(md: CuModule; name: string): CuFunction =
+proc getKernel*(md: CuModule; name: string): CuFunction =
   ## Get a CUDA kernel from a module by name.
   let cs = name.cstring
   handleError cuModuleGetFunction(result.addr, md, cs)
