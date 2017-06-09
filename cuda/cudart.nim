@@ -1,5 +1,5 @@
 const
-  libCuda = "cuda.so"
+  libCuda = "libcuda.so"
 
 const
   CUDA_API_VERSION* = 8000

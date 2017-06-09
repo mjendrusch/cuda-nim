@@ -11,15 +11,14 @@ type
 proc cfree*(p: pointer) {. importc: "free" .}
 
 proc errorString(err: CuResult): string =
-  var p: ptr cstring
+  var p = cast[ptr cstring](alloc0(sizeOf(pointer)))
   discard err.cuGetErrorString(p)
   result = $p[]
-  p.cfree
+  dealloc p
 
 proc errorString(err: NvRtcResult): string =
   var p = err.nvrtcGetErrorString
   result = $p
-  p.cfree
 
 template handleError(err: CuResult) =
   let e = err
@@ -76,9 +75,12 @@ proc newProgram*(src: string; name: string = "defaultName.cu";
 
 proc compile*(pr: NvrtcProgram; options: seq[string] = @[]) =
   ## Compiles a given CUDA program, setting options.
-  let optionsPtr = allocCstringArray(options)
-  defer: deallocCstringArray(optionsPtr)
+  var optionsPtr: cstringArray = nil
+  if options.len != 0:
+    optionsPtr = allocCstringArray(options)
   handleErrorRtc nvrtcCompileProgram(pr, options.len.cint, optionsPtr)
+  if options.len != 0:
+    deallocCstringArray(optionsPtr)
 
 proc ptxSize*(pr: NvrtcProgram): uint =
   ## Computes the size of the PTX code in bytes resulting from a program.

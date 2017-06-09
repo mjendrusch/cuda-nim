@@ -1,4 +1,4 @@
-const libRtc = "nvrtc.so"
+const libRtc = "libnvrtc.so"
 
 type
   NvrtcResult* {.size: sizeof(cint).} = enum
@@ -9,7 +9,7 @@ type
     NVRTC_ERROR_NO_NAME_EXPRESSIONS_AFTER_COMPILATION = 8,
     NVRTC_ERROR_NO_LOWERED_NAMES_BEFORE_COMPILATION = 9,
     NVRTC_ERROR_NAME_EXPRESSION_NOT_VALID = 10, NVRTC_ERROR_INTERNAL_ERROR = 11
-  NvrtcProgram* = ptr object
+  NvrtcProgram* {. incompleteStruct .} = ptr object
 
 proc nvrtcGetErrorString*(result: NvrtcResult): cstring {.
     importc: "nvrtcGetErrorString", dynlib: libRtc.}
