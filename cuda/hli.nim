@@ -158,6 +158,15 @@ proc getKernel*(md: CuModule; name: string): CuFunction =
   let cs = name.cstring
   handleError cuModuleGetFunction(result.addr, md, cs)
 
+proc getGlobal*(md: CuModule; name: string): tuple[p: CuDevicePtr, len: int] =
+  ## Get a reference to a global variable by name.
+  let
+    cs = name.cstring
+  var
+    size: csize
+  handleError cuModuleGetGlobal(result.p.addr, size.addr, md, cs)
+  result.len = size.int
+
 proc unload*(md: CuModule) =
   ## Unload a module from the current Context.
   handleError md.cuModuleUnload
