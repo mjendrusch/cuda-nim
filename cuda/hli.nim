@@ -184,9 +184,9 @@ proc deviceAlloc*(bytes: uint): CuDevicePtr =
   ## Allocate bytes memory on a device.
   handleError cuMemAlloc(result.addr, bytes.csize)
 
-proc deviceFree*(p: DevicePtr) =
+proc deviceFree*(p: CuDevicePtr) =
   ## Free memory allocated on a device.
-  handleError cuMemFree(p.CuDevicePtr)
+  handleError cuMemFree(p)
 
 proc copyMem*(dest: DevicePointer; src: pointer; size: Natural) =
   ## Copy data from the host to the device.
@@ -199,6 +199,26 @@ proc copyMem*(dest: pointer; src: DevicePointer; size: Natural) =
 proc copyMem*(dest, src: DevicePointer; size: Natural) =
   ## Copy data from one device address to another.
   handleError cuMemcpyHtoH(dest.CuDevicePtr, src.CuDevicePtr, size)
+
+template gpu*[T](x: ptr T; num: uint): auto =
+  ## Copy a pointer to gpu.
+  var deviceX = deviceAlloc(num * sizeOf(x[].type).uint)
+  copyMem(deviceX, x, num * sizeOf(x[].type).uint)
+  DevicePtr[x[].type](deviceX)
+
+template gpu*[T](x: openarray[T]): auto =
+  ## Copy an array or seq to gpu.
+  x[0].unsafeAddr.gpu x.len.uint
+
+template host*[T](dest: var ptr T; x: CuDevicePtr; num: uint) =
+  ## Copy a device pointer to the host
+  dest.realloc(num * sizeOf(T).uint)
+  dest.copyMem(CuDevicePtr x, num * sizeOf(T).uint)
+
+template host*[T](dest: var seq[T]; x: CuDevicePtr; num: uint) =
+  ## Copy a device pointer to the host
+  dest.setLen(num)
+  dest[0].addr.copyMem(CuDevicePtr x, num * sizeOf(T).uint)
 
 proc setMem*[T](dest: DevicePointer; val: T; size: Natural) =
   ## Sets size values at dest to val.
@@ -226,3 +246,18 @@ proc launch*(f: CuFunction; gridDim, blockDim: Dim;
   ## Launch the kernel associated with f using a simplified interface.
   f.launch(gridDim.x, gridDim.y, gridDim.z, blockDim.x, blockDim.y, blockDim.z,
            params, sharedBytes)
+
+## Autoinit
+template initCuda*(at: int) =
+  bind init
+  init()
+  var
+    baseDevice {. inject .}: CuDevice
+    baseContext {. inject .}: CuContext
+  try:
+    baseDevice = getDevice(at)
+    baseContext = newContext(baseDevice)
+  except:
+    echo "Device at " & $at & " not accessible. Using Device 0 instead."
+    baseDevice = getDevice(0)
+    baseContext = newContext(baseDevice)
