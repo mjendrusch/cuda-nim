@@ -218,7 +218,7 @@ template host*[T](dest: var ptr T; x: CuDevicePtr; num: uint) =
 template host*[T](dest: var seq[T]; x: CuDevicePtr; num: uint) =
   ## Copy a device pointer to the host
   dest.setLen(num)
-  dest[0].addr.copyMem(CuDevicePtr x, num * sizeOf(T).uint)
+  dest[0].addr.copyMem(x, num * sizeOf(T).uint)
 
 proc setMem*[T](dest: DevicePointer; val: T; size: Natural) =
   ## Sets size values at dest to val.
