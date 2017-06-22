@@ -212,7 +212,7 @@ template gpu*[T](x: openarray[T]): auto =
 
 template host*[T](dest: var ptr T; x: CuDevicePtr; num: uint) =
   ## Copy a device pointer to the host
-  dest.realloc(num * sizeOf(T).uint)
+  dest = cast[ptr T](dest.realloc(num * sizeOf(T).uint))
   dest.copyMem(CuDevicePtr x, num * sizeOf(T).uint)
 
 template host*[T](dest: var seq[T]; x: CuDevicePtr; num: uint) =
